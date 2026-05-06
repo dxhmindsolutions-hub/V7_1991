@@ -82,7 +82,7 @@ useEffect(() => {
     setTiempo("");
   }
 
-}, [pedidoNumero, tipoPedido, pedidos]);
+}, [pedidoNumero, tipoPedido]);
   const [verMesas, setVerMesas] = useState(false);
   const [comensales, setComensales] = useState("");
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -208,7 +208,10 @@ useEffect(() => {
   
   // AGREGAR ARTÍCULO
   const agregarArticulo = (ref) => {
-  if (!pedidoNumero) return alert("Introduce mesa");
+  if (!pedidoNumero) {
+  alert("Introduce mesa");
+  return;
+}
 
   // 🔥 1. SI ES MENÚ → AÑADIR MENÚ + HIJOS
   if (MENUS[ref]) {

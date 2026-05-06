@@ -188,13 +188,19 @@ useEffect(() => {
 
   const tipo = tipoPedido === "comer" ? "salon" : tipoPedido;
 
-  const key = `${tipo}_${pedidoNumero}`;
+  const tieneContenido =
+    ticket.length > 0 ||
+    comensales ||
+    telefono ||
+    direccion;
 
-setPedidos(prev => ({
-  ...prev,
-  [tipo]: {
-    ...prev[tipo],
-    [pedidoNumero]: {
+  if (!tieneContenido) return; // 🔥 clave
+
+  setPedidos(prev => ({
+    ...prev,
+    [tipo]: {
+      ...prev[tipo],
+      [pedidoNumero]: {
         ticket,
         comensales,
         telefono,
@@ -708,8 +714,11 @@ if (modoCocina) {
 if (verMesas) {
 
   const renderBloque = (titulo, tipo, emoji) => {
-    const lista = pedidos?.[tipo] || {};
-
+    const lista = Object.fromEntries(
+  Object.entries(pedidos?.[tipo] || {}).filter(
+    ([_, data]) => data.ticket?.length > 0
+  )
+);
     return (
       <div className="mb-6">
 
@@ -745,6 +754,24 @@ if (verMesas) {
               >
                 <div className="text-xl font-bold">
                   {tipo === "salon" ? `Mesa ${num}` : `Pedido ${num}`}
+
+                  <button
+  onClick={(e) => {
+    e.stopPropagation();
+
+    if (!confirm("¿Cerrar este ticket?")) return;
+
+    setPedidos(prev => {
+      const copia = { ...prev };
+      delete copia[tipo][num];
+      return copia;
+    });
+  }}
+  className="mt-2 w-full bg-red-600 text-white p-2 rounded"
+>
+  ❌ Cerrar ticket
+</button>
+                  
                 </div>
 
                 <div className="text-sm text-gray-500">

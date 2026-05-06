@@ -47,6 +47,11 @@ function POSApp() {
   const [numeroTicket, setNumeroTicket] = useState("");
   const [articulos, setArticulos] = useState({});
   const [ticket, setTicket] = useState([]);
+  const [pedidos, setPedidos] = useState({
+  salon: {},
+  llevar: {},
+  recoger: {}
+});
   const [categoriaActiva, setCategoriaActiva] = useState(null);
   const [listaAbierta, setListaAbierta] = useState(true);
   const [pedidoNumero, setPedidoNumero] = useState("");
@@ -124,9 +129,20 @@ setArticulos(data);
     if (data) setArticulos(JSON.parse(data));
   }, []);
 
+  // 🔥 Cargar pedidos guardados
+useEffect(() => {
+  const data = localStorage.getItem("pedidos");
+  if (data) setPedidos(JSON.parse(data));
+}, []);
+  
   useEffect(() => {
     localStorage.setItem("articulos", JSON.stringify(articulos));
   }, [articulos]);
+
+  // 🔥 Guardar pedidos en localStorage
+useEffect(() => {
+  localStorage.setItem("pedidos", JSON.stringify(pedidos));
+}, [pedidos]);
 
   useEffect(()=>{
   if(tipoPedido === "comer"){
@@ -136,6 +152,30 @@ setArticulos(data);
     setMetodoPago("");
   }
 },[tipoPedido]);
+
+  // 🔥 AUTO-GUARDADO DEL PEDIDO ACTUAL
+useEffect(() => {
+  if (!pedidoNumero) return;
+
+  const tipo = tipoPedido === "comer" ? "salon" : tipoPedido;
+
+  setPedidos(prev => ({
+    ...prev,
+    [tipo]: {
+      ...prev[tipo],
+      [pedidoNumero]: {
+        ticket,
+        comensales,
+        telefono,
+        direccion,
+        zona,
+        metodoPago,
+        tiempo
+      }
+    }
+  }));
+
+}, [ticket, comensales, telefono, direccion, zona, metodoPago, tiempo, pedidoNumero, tipoPedido]);
   
   // AGREGAR ARTÍCULO
   const agregarArticulo = (ref) => {

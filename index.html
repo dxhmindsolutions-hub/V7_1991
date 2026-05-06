@@ -704,11 +704,65 @@ if (modoCocina) {
     );
   }
 if (verMesas) {
-  const tipo = tipoPedido === "comer" ? "salon" : tipoPedido;
-  const listaMesas = pedidos?.[tipo] || {};
+
+  const renderBloque = (titulo, tipo, emoji) => {
+    const lista = pedidos?.[tipo] || {};
+
+    return (
+      <div className="mb-6">
+
+        {/* TITULO */}
+        <div className="text-lg font-bold mb-2">
+          {emoji} {titulo}
+        </div>
+
+        {/* LISTA */}
+        <div className="grid grid-cols-2 gap-3">
+
+          {Object.keys(lista).length === 0 && (
+            <div className="text-gray-400 text-sm">
+              Sin pedidos
+            </div>
+          )}
+
+          {Object.entries(lista).map(([num, data]) => {
+
+            const total = data.ticket?.reduce(
+              (s, t) => s + t.precio * t.cantidad, 0
+            ) || 0;
+
+            return (
+              <div
+                key={num}
+                onClick={() => {
+                  setTipoPedido(tipo === "salon" ? "comer" : tipo);
+                  setPedidoNumero(num);
+                  setVerMesas(false);
+                }}
+                className="bg-white p-4 rounded-xl shadow cursor-pointer border"
+              >
+                <div className="text-xl font-bold">
+                  {tipo === "salon" ? `Mesa ${num}` : `Pedido ${num}`}
+                </div>
+
+                <div className="text-sm text-gray-500">
+                  {data.ticket?.length || 0} productos
+                </div>
+
+                <div className="text-lg font-bold mt-2">
+                  {total.toFixed(2)}€
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="p-4">
+
       <button
         onClick={() => setVerMesas(false)}
         className="mb-4 bg-black text-white p-2 rounded"
@@ -716,37 +770,10 @@ if (verMesas) {
         ← Volver
       </button>
 
-      <div className="grid grid-cols-2 gap-3">
-        {Object.entries(listaMesas).map(([num, data]) => {
+      {renderBloque("Salón", "salon", "🍽️")}
+      {renderBloque("Llevar", "llevar", "🥡")}
+      {renderBloque("Recoger", "recoger", "🚶")}
 
-          const totalMesa = data.ticket?.reduce(
-            (s, t) => s + t.precio * t.cantidad, 0
-          ) || 0;
-
-          return (
-            <div
-              key={num}
-              onClick={() => {
-                setPedidoNumero(num);
-                setVerMesas(false);
-              }}
-              className="bg-white p-4 rounded-xl shadow cursor-pointer"
-            >
-              <div className="text-xl font-bold">
-                {tipoPedido === "comer" ? `Mesa ${num}` : num}
-              </div>
-
-              <div className="text-sm text-gray-500">
-                {data.ticket?.length || 0} productos
-              </div>
-
-              <div className="text-lg font-bold mt-2">
-                {totalMesa.toFixed(2)}€
-              </div>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }

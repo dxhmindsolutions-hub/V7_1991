@@ -55,6 +55,34 @@ function POSApp() {
   const [categoriaActiva, setCategoriaActiva] = useState(null);
   const [listaAbierta, setListaAbierta] = useState(true);
   const [pedidoNumero, setPedidoNumero] = useState("");
+  // 🔥 CARGAR PEDIDO AL CAMBIAR MESA
+useEffect(() => {
+  if (!pedidoNumero) return;
+
+  const tipo = tipoPedido === "comer" ? "salon" : tipoPedido;
+
+  const pedidoGuardado = pedidos?.[tipo]?.[pedidoNumero];
+
+  if (pedidoGuardado) {
+    setTicket(pedidoGuardado.ticket || []);
+    setComensales(pedidoGuardado.comensales || "");
+    setTelefono(pedidoGuardado.telefono || "");
+    setDireccion(pedidoGuardado.direccion || "");
+    setZona(pedidoGuardado.zona || "");
+    setMetodoPago(pedidoGuardado.metodoPago || "");
+    setTiempo(pedidoGuardado.tiempo || "");
+  } else {
+    // 🔥 si no existe → limpiar
+    setTicket([]);
+    setComensales("");
+    setTelefono("");
+    setDireccion("");
+    setZona("");
+    setMetodoPago("");
+    setTiempo("");
+  }
+
+}, [pedidoNumero, tipoPedido, pedidos]);
   const [comensales, setComensales] = useState("");
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [modoGestion, setModoGestion] = useState(false);

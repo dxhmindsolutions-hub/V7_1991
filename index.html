@@ -61,7 +61,8 @@ useEffect(() => {
 
   const tipo = tipoPedido === "comer" ? "salon" : tipoPedido;
 
-  const pedidoGuardado = pedidos?.[tipo]?.[pedidoNumero];
+
+const pedidoGuardado = pedidos?.[tipo]?.[pedidoNumero];
 
   if (pedidoGuardado) {
     setTicket(pedidoGuardado.ticket || []);
@@ -173,14 +174,13 @@ useEffect(() => {
   localStorage.setItem("pedidos", JSON.stringify(pedidos));
 }, [pedidos]);
 
-  useEffect(()=>{
-  if(tipoPedido === "comer"){
-    setTelefono("");
-    setTiempo("");
-    setDireccion("");
-    setMetodoPago("");
-  }
-},[tipoPedido]);
+  useEffect(() => {
+  setTelefono("");
+  setTiempo("");
+  setDireccion("");
+  setMetodoPago("");
+  setTicket([]);
+}, [tipoPedido]);
 
   // 🔥 AUTO-GUARDADO DEL PEDIDO ACTUAL
 useEffect(() => {
@@ -188,11 +188,13 @@ useEffect(() => {
 
   const tipo = tipoPedido === "comer" ? "salon" : tipoPedido;
 
-  setPedidos(prev => ({
-    ...prev,
-    [tipo]: {
-      ...prev[tipo],
-      [pedidoNumero]: {
+  const key = `${tipo}_${pedidoNumero}`;
+
+setPedidos(prev => ({
+  ...prev,
+  [tipo]: {
+    ...prev[tipo],
+    [pedidoNumero]: {
         ticket,
         comensales,
         telefono,

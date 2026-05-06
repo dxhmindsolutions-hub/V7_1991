@@ -83,6 +83,7 @@ useEffect(() => {
   }
 
 }, [pedidoNumero, tipoPedido, pedidos]);
+  const [verMesas, setVerMesas] = useState(false);
   const [comensales, setComensales] = useState("");
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [modoGestion, setModoGestion] = useState(false);
@@ -699,7 +700,53 @@ if (modoCocina) {
       </div>
     );
   }
+if (verMesas) {
+  const tipo = tipoPedido === "comer" ? "salon" : tipoPedido;
+  const listaMesas = pedidos?.[tipo] || {};
 
+  return (
+    <div className="p-4">
+      <button
+        onClick={() => setVerMesas(false)}
+        className="mb-4 bg-black text-white p-2 rounded"
+      >
+        ← Volver
+      </button>
+
+      <div className="grid grid-cols-2 gap-3">
+        {Object.entries(listaMesas).map(([num, data]) => {
+
+          const totalMesa = data.ticket?.reduce(
+            (s, t) => s + t.precio * t.cantidad, 0
+          ) || 0;
+
+          return (
+            <div
+              key={num}
+              onClick={() => {
+                setPedidoNumero(num);
+                setVerMesas(false);
+              }}
+              className="bg-white p-4 rounded-xl shadow cursor-pointer"
+            >
+              <div className="text-xl font-bold">
+                {tipoPedido === "comer" ? `Mesa ${num}` : num}
+              </div>
+
+              <div className="text-sm text-gray-500">
+                {data.ticket?.length || 0} productos
+              </div>
+
+              <div className="text-lg font-bold mt-2">
+                {totalMesa.toFixed(2)}€
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
   // ====================
   // 🛠️ MODO GESTIÓN
   // ====================
@@ -821,6 +868,10 @@ return (
       </button>
 
       <h1 className="font-bold">Mini POS</h1>
+
+      <button onClick={() => setVerMesas(true)}>
+  🪑
+</button>
 
       <button onClick={() => setModoGestion(true)}>
         ⚙️

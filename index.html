@@ -52,28 +52,23 @@ function POSApp() {
   llevar: {},
   recoger: {}
 });
-  const [categoriaActiva, setCategoriaActiva] = useState(null);
-  const [listaAbierta, setListaAbierta] = useState(true);
-  const [pedidoNumero, setPedidoNumero] = useState("");
-  // 🔥 CARGAR PEDIDO AL CAMBIAR MESA
-useEffect(() => {
-  if (!pedidoNumero) return;
 
-  const tipo = tipoPedido === "comer" ? "salon" : tipoPedido;
+const abrirPedido = (tipo, numero) => {
 
+  const pedido = pedidos[tipo]?.[numero];
 
-const pedidoGuardado = pedidos?.[tipo]?.[pedidoNumero];
+  setTipoPedido(tipo === "salon" ? "comer" : tipo);
+  setPedidoNumero(numero);
 
-  if (pedidoGuardado) {
-    setTicket(pedidoGuardado.ticket || []);
-    setComensales(pedidoGuardado.comensales || "");
-    setTelefono(pedidoGuardado.telefono || "");
-    setDireccion(pedidoGuardado.direccion || "");
-    setZona(pedidoGuardado.zona || "");
-    setMetodoPago(pedidoGuardado.metodoPago || "");
-    setTiempo(pedidoGuardado.tiempo || "");
+  if (pedido) {
+    setTicket(pedido.ticket || []);
+    setComensales(pedido.comensales || "");
+    setTelefono(pedido.telefono || "");
+    setDireccion(pedido.direccion || "");
+    setZona(pedido.zona || "");
+    setMetodoPago(pedido.metodoPago || "");
+    setTiempo(pedido.tiempo || "");
   } else {
-    // 🔥 si no existe → limpiar
     setTicket([]);
     setComensales("");
     setTelefono("");
@@ -83,7 +78,11 @@ const pedidoGuardado = pedidos?.[tipo]?.[pedidoNumero];
     setTiempo("");
   }
 
-}, [pedidoNumero, tipoPedido]);
+  setModoMesas(false);
+};
+  const [categoriaActiva, setCategoriaActiva] = useState(null);
+  const [listaAbierta, setListaAbierta] = useState(true);
+  const [pedidoNumero, setPedidoNumero] = useState("");
   const [verMesas, setVerMesas] = useState(false);
   const [comensales, setComensales] = useState("");
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -745,11 +744,7 @@ if (verMesas) {
             return (
               <div
                 key={num}
-                onClick={() => {
-                  setTipoPedido(tipo === "salon" ? "comer" : tipo);
-                  setPedidoNumero(num);
-                  setVerMesas(false);
-                }}
+           onClick={() => abrirPedido(tipo, num)}
                 className="bg-white p-4 rounded-xl shadow cursor-pointer border"
               >
                 <div className="text-xl font-bold">

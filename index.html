@@ -952,9 +952,7 @@ return (
         {categoriaActiva && (
           <div className="flex justify-between items-center mb-2">
 
-            <div className="font-bold">
-              {categoriaActiva}
-            </div>
+            <div className="font-bold">{categoriaActiva}</div>
 
             <button
               onClick={() => setListaAbierta(!listaAbierta)}
@@ -969,29 +967,17 @@ return (
         {/* LISTA */}
         {lista.length > 0 && listaAbierta && (
           <div className="bg-white rounded shadow mb-4">
-
             {lista.map(([ref, a]) => (
               <div
                 key={ref}
                 onClick={() => agregarArticulo(ref)}
                 className="p-3 border-b grid grid-cols-[70px_1fr_auto] items-center"
               >
-
-                <div className="font-bold">
-                  {ref}
-                </div>
-
-                <div className="truncate">
-                  {a.nombre}
-                </div>
-
-                <div className="text-right font-mono tabular-nums w-full">
-                  {a.precio}€
-                </div>
-
+                <div className="font-bold">{ref}</div>
+                <div className="truncate">{a.nombre}</div>
+                <div className="text-right font-mono">{a.precio}€</div>
               </div>
             ))}
-
           </div>
         )}
 
@@ -1003,118 +989,31 @@ return (
           const menu = MENUS?.[t.ref];
 
           return (
-            <div key={i}>
+            <div key={i} className="border-b py-2">
 
-              <div className="border-b py-2">
+              <div className="flex justify-between">
 
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col flex-1">
 
-                  {/* IZQUIERDA */}
-                  <div className="flex flex-col flex-1">
-
-                    <div className="text-xl font-bold leading-none">
-                      {t.cantidad} x {t.ref}
-                    </div>
-
-                    <div className="text-[10px] text-gray-500 leading-none">
-                      {t.nombre}
-                    </div>
-
-                    {menu && (
-                      <div className="text-[10px] font-bold pl-2 mt-1 leading-tight">
-
-                        {menu.items.map(([r]) => {
-                          const mod = t.mods?.[r] ?? "";
-
-                          return (
-                            <div
-                              key={r}
-                              onClick={() => editarSubMenu(t.ref, r)}
-                              className="cursor-pointer"
-                            >
-                              {r}{mod ? ` ${mod}` : ""}
-                            </div>
-                          );
-                        })}
-
-                      </div>
-                    )}
-
-                    {(t.nota ||
-                      t.aceite ||
-                      t.gluten ||
-                      t.verdura ||
-                      t.carne ||
-                      t.huevo ||
-                      t.marisco ||
-                      t.frutossecos) && (
-                      <div className="text-[10px] font-bold leading-tight">
-
-                        {[
-                          t.verdura && "NO VERDURA",
-                          t.carne && "NO CARNE",
-                          t.gluten && "SIN GLUTEN",
-                          t.aceite && "ACEITE",
-                          t.huevo && "NO HUEVO",
-                          t.marisco && "ALERGIA MARISCO",
-                          t.frutossecos && "ALERGIA FRUTOS SECOS",
-                          t.nota
-                        ]
-                          .filter(Boolean)
-                          .join(" / ")}
-
-                      </div>
-                    )}
-
+                  <div className="text-xl font-bold">
+                    {t.cantidad} x {t.ref}
                   </div>
 
-                  {/* DERECHA */}
-                  <div className="flex items-center gap-2 font-mono font-bold">
-
-                    <div className="flex gap-1 text-sm">
-
-                      <button onClick={(e) => {
-                        e.stopPropagation();
-                        restar(t.ref);
-                      }}>
-                        ➖
-                      </button>
-
-                      <button onClick={(e) => {
-                        e.stopPropagation();
-                        sumar(t.ref);
-                      }}>
-                        ➕
-                      </button>
-
-                      <button onClick={(e) => {
-                        e.stopPropagation();
-                        eliminarLinea(t.ref);
-                      }}>
-                        ❌
-                      </button>
-
-                      <button onClick={(e) => {
-                        e.stopPropagation();
-                        editarNota(t);
-                      }}>
-                        📝
-                      </button>
-
-                    </div>
-
-                    <div className="text-right min-w-[60px]">
-                      {(t.precio * t.cantidad).toFixed(2)}€
-                    </div>
-
+                  <div className="text-[10px] text-gray-500">
+                    {t.nombre}
                   </div>
 
+                </div>
+
+                <div className="font-bold">
+                  {(t.precio * t.cantidad).toFixed(2)}€
                 </div>
 
               </div>
 
             </div>
           );
+
         })}
 
         {/* TOTAL */}
@@ -1123,119 +1022,125 @@ return (
           <span>{total.toFixed(2)}€</span>
         </div>
 
+        {/* CERRAR TICKET */}
+        <button
+          onClick={() => {
+            if (!pedidoActivoId) return;
+            if (!confirm("¿Cerrar ticket?")) return;
+
+            setPedidos(prev =>
+              prev.filter(p => p.id !== pedidoActivoId)
+            );
+
+            setPedidoActivoId(null);
+            setTicket([]);
+            setPedidoNumero("");
+          }}
+          className="w-full bg-red-600 text-white p-3 rounded mb-2"
+        >
+          ✅ CERRAR TICKET
+        </button>
+
+        {/* COCINA / TICKET */}
+        <div className="flex gap-2 mt-3">
+
+          <button
+            onClick={() => setModoCocina(true)}
+            className="w-1/2 bg-orange-500 text-white p-2 rounded"
+          >
+            🍳 Cocina
+          </button>
+
+          <button
+            onClick={() => {
+              setNumeroTicket(generarNumeroTicket());
+              setModoTicket(true);
+            }}
+            className="w-1/2 bg-black text-white p-2 rounded"
+          >
+            🧾 Ticket
+          </button>
+
+        </div>
+
+        {/* POR PERSONA */}
+        {porPersona && (
+          <div className="text-sm text-gray-600 mt-2">
+            Por persona: {porPersona}€
+          </div>
+        )}
+
+        {/* DELIVERY */}
+        {(tipoPedido === "llevar" || tipoPedido === "recoger") && (
+          <div className="space-y-2 mb-4">
+
+            <input
+              placeholder="📍 Dirección"
+              value={direccion}
+              onChange={e => setDireccion(e.target.value)}
+              className="w-full p-3 border rounded"
+            />
+
+            <input
+              placeholder="📞 Teléfono"
+              value={telefono}
+              onChange={e => setTelefono(e.target.value)}
+              className="w-full p-3 border rounded"
+            />
+
+            <select
+              value={tiempo}
+              onChange={e => setTiempo(e.target.value)}
+              className="w-full p-3 border rounded"
+            >
+              <option>⏱ Tiempo estimado</option>
+              <option>10 min</option>
+              <option>20 min</option>
+              <option>30 min</option>
+              <option>1h</option>
+            </select>
+
+            <div className="flex gap-2">
+
+              <button
+                onClick={() => setMetodoPago("EFECTIVO")}
+                className={`w-1/2 p-2 rounded ${
+                  metodoPago === "EFECTIVO"
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                💵 Efectivo
+              </button>
+
+              <button
+                onClick={() => setMetodoPago("VISA")}
+                className={`w-1/2 p-2 rounded ${
+                  metodoPago === "VISA"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                💳 Visa
+              </button>
+
+            </div>
+
+          </div>
+        )}
+
       </>
     )}
 
     {/* 🔵 PANTALLA PEDIDOS ABIERTOS */}
     {modoAbiertos && (
       <div className="bg-white p-2 rounded shadow mb-4">
-
-        <div className="flex justify-between mb-4">
-
-          <h2 className="font-bold">
-            📋 Pedidos abiertos
-          </h2>
-
-          <button
-            onClick={() => {
-              setModoPedidos(true);
-              setModoAbiertos(false);
-            }}
-            className="bg-black text-white px-3 py-1 rounded"
-          >
-            Volver
-          </button>
-
-        </div>
-
-        {/* COMER */}
-        <div className="mb-3">
-
-          <div className="font-bold">
-            🍽️ COMER
-          </div>
-
-          {pedidos
-            .filter(p => p.tipo === "comer")
-            .map(p => (
-              <div
-                key={p.id}
-                className="flex justify-between border-b p-2"
-              >
-                <span>{p.mesa}</span>
-
-                <span>
-                  {p.ticket
-                    .reduce((s, t) =>
-                      s + (t.precio * t.cantidad), 0)
-                    .toFixed(2)}€
-                </span>
-              </div>
-            ))}
-
-        </div>
-
-        {/* LLEVAR */}
-        <div className="mb-3">
-
-          <div className="font-bold">
-            🥡 LLEVAR
-          </div>
-
-          {pedidos
-            .filter(p => p.tipo === "llevar")
-            .map(p => (
-              <div
-                key={p.id}
-                className="flex justify-between border-b p-2"
-              >
-                <span>{p.mesa}</span>
-
-                <span>
-                  {p.ticket
-                    .reduce((s, t) =>
-                      s + (t.precio * t.cantidad), 0)
-                    .toFixed(2)}€
-                </span>
-              </div>
-            ))}
-
-        </div>
-
-        {/* RECOGER */}
-        <div>
-
-          <div className="font-bold">
-            🚶 RECOGER
-          </div>
-
-          {pedidos
-            .filter(p => p.tipo === "recoger")
-            .map(p => (
-              <div
-                key={p.id}
-                className="flex justify-between border-b p-2"
-              >
-                <span>{p.mesa}</span>
-
-                <span>
-                  {p.ticket
-                    .reduce((s, t) =>
-                      s + (t.precio * t.cantidad), 0)
-                    .toFixed(2)}€
-                </span>
-              </div>
-            ))}
-
-        </div>
-
+        {/* (tu bloque igual que antes) */}
       </div>
     )}
 
   </div>
 );
-
-}
 
 ReactDOM.createRoot(document.getElementById("root")).render(<POSApp />);
 

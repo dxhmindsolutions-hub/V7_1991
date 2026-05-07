@@ -173,13 +173,15 @@ useEffect(() => {
   localStorage.setItem("pedidos", JSON.stringify(pedidos));
 }, [pedidos]);
 
-  useEffect(() => {
+ useEffect(() => {
+  if (!pedidoNumero) return;
+
   setTelefono("");
   setTiempo("");
   setDireccion("");
   setMetodoPago("");
   setTicket([]);
-}, [tipoPedido]);
+}, [pedidoNumero]);
 
   // 🔥 AUTO-GUARDADO DEL PEDIDO ACTUAL
 useEffect(() => {
@@ -281,20 +283,24 @@ useEffect(() => {
 };
 
   // CONTROLES TICKET
-  const sumar = (ref) => {
-    setTicket(ticket.map(t => t.ref === ref ? {...t, cantidad: t.cantidad+1} : t));
-  };
+ const sumar = (index) => {
+  setTicket(ticket.map((t, i) =>
+    i === index
+      ? {...t, cantidad: t.cantidad + 1}
+      : t
+  ));
+};
 
-  const restar = (ref) => {
-    setTicket(ticket
-      .map(t => t.ref === ref ? {...t, cantidad: t.cantidad-1} : t)
-      .filter(t => t.cantidad > 0));
-  };
-
-  const eliminarLinea = (ref) => {
-    if (!confirm("¿Eliminar producto del ticket?")) return;
-    setTicket(ticket.filter(t => t.ref !== ref));
-  };
+ const restar = (index) => {
+  setTicket(ticket
+    .map((t, i) =>
+      i === index
+        ? {...t, cantidad: t.cantidad - 1}
+        : t
+    )
+    .filter(t => t.cantidad > 0)
+  );
+};
 
  const editarNota = (item) => {
   setProductoEditando(item);
@@ -1102,9 +1108,9 @@ return (
           <div className="flex items-center gap-2 font-mono font-bold">
 
             <div className="flex gap-1 text-sm">
-              <button onClick={(e) => { e.stopPropagation(); restar(t.ref); }}>➖</button>
-              <button onClick={(e) => { e.stopPropagation(); sumar(t.ref); }}>➕</button>
-              <button onClick={(e) => { e.stopPropagation(); eliminarLinea(t.ref); }}>❌</button>
+              <button onClick={(e) => { e.stopPropagation(); restar(i); }}>➖</button>
+              <button onClick={(e) => { e.stopPropagation(); sumar(i); }}>➕</button>
+              <button onClick={(e) => { e.stopPropagation(); eliminarLinea(i); }}>❌</button>
               <button onClick={(e) => { e.stopPropagation(); editarNota(t); }}>📝</button>
             </div>
 

@@ -1235,26 +1235,15 @@ return (
   </div>
 );
 
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(<POSApp />);
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker registrado', reg))
-      .catch(err => console.log('Error registrando SW', err));
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./sw.js")
+      .then(reg => console.log("Service Worker registrado", reg))
+      .catch(err => console.log("Error registrando SW", err));
   });
 }
-
-</script>
-
-<style>
-@media print {
-  body * { visibility: hidden; }
-  #ticket, #ticket * { visibility: visible; }
-  #cocina, #cocina * { visibility: visible; } /* 🔹 Añadido para comanda */
-  #ticket, #cocina { position: absolute; top: 0; left: 0; width: 100%; }
-}
-</style>
-
-</body>
-</html>

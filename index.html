@@ -1057,6 +1057,29 @@ return (
   <span>{total.toFixed(2)}€</span>
 </div>
 
+    <button
+  onClick={() => {
+
+    if (!pedidoActivoId) return;
+
+    if (!confirm("¿Cerrar ticket?")) return;
+
+    setPedidos(prev =>
+      prev.filter(p => p.id !== pedidoActivoId)
+    );
+
+    setPedidoActivoId(null);
+
+    setTicket([]);
+
+    setPedidoNumero("");
+
+  }}
+  className="w-full bg-red-600 text-white p-3 rounded mb-2"
+>
+  ✅ CERRAR TICKET
+</button>
+
    <div className="flex gap-2 mt-3">
 
   <button

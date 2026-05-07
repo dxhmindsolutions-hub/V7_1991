@@ -176,7 +176,27 @@ setArticulos(data);
 };
   // AGREGAR ARTÍCULO
   const agregarArticulo = (ref) => {
-  if (!pedidoNumero) return alert("Introduce mesa");
+    
+    // SI NO HAY PEDIDO ACTIVO → CREAR AUTOMÁTICO
+if (!pedidoActivoId) {
+
+  if (!pedidoNumero) {
+    alert("Introduce mesa");
+    return;
+  }
+
+  const nuevoPedido = {
+    id: Date.now().toString(),
+    mesa: pedidoNumero,
+    tipo: tipoPedido,
+    ticket: [],
+    fecha: Date.now()
+  };
+
+  setPedidos(prev => [...prev, nuevoPedido]);
+
+  setPedidoActivoId(nuevoPedido.id);
+}
 
   // 🔥 1. SI ES MENÚ → AÑADIR MENÚ + HIJOS
   if (MENUS[ref]) {
@@ -788,16 +808,141 @@ if (modoCocina) {
 return (
   <div className="p-4 max-w-md mx-auto">
 
-    {/* PEDIDOS ABIERTOS */}
-
 <div className="bg-white p-2 rounded shadow mb-4">
 
-  <div className="font-bold mb-2">
-    PEDIDOS ABIERTOS
+  {/* COMER */}
+  <div className="mb-4">
+
+    <div className="font-bold text-lg mb-2">
+      🍽️ COMER
+    </div>
+
+    {pedidos
+      .filter(p => p.tipo === "comer")
+      .map(p => {
+
+        const totalPedido = p.ticket.reduce(
+          (s, t) => s + (t.precio * t.cantidad),
+          0
+        );
+
+        return (
+          <div
+            key={p.id}
+            onClick={() => {
+              setPedidoActivoId(p.id);
+              setPedidoNumero(p.mesa);
+              setTipoPedido(p.tipo);
+            }}
+            className={`p-3 border-b flex justify-between ${
+              pedidoActivoId === p.id
+                ? "bg-black text-white"
+                : ""
+            }`}
+          >
+
+            <div className="text-2xl font-bold">
+              {p.mesa}
+            </div>
+
+            <div>
+              {totalPedido.toFixed(2)}€
+            </div>
+
+          </div>
+        );
+      })}
   </div>
 
-  {pedidos.map(p => {
+  {/* LLEVAR */}
+  <div className="mb-4">
 
+    <div className="font-bold text-lg mb-2">
+      🥡 LLEVAR
+    </div>
+
+    {pedidos
+      .filter(p => p.tipo === "llevar")
+      .map(p => {
+
+        const totalPedido = p.ticket.reduce(
+          (s, t) => s + (t.precio * t.cantidad),
+          0
+        );
+
+        return (
+          <div
+            key={p.id}
+            onClick={() => {
+              setPedidoActivoId(p.id);
+              setPedidoNumero(p.mesa);
+              setTipoPedido(p.tipo);
+            }}
+            className={`p-3 border-b flex justify-between ${
+              pedidoActivoId === p.id
+                ? "bg-black text-white"
+                : ""
+            }`}
+          >
+
+            <div className="text-2xl font-bold">
+              {p.mesa}
+            </div>
+
+            <div>
+              {totalPedido.toFixed(2)}€
+            </div>
+
+          </div>
+        );
+      })}
+  </div>
+
+  {/* RECOGER */}
+  <div>
+
+    <div className="font-bold text-lg mb-2">
+      🚶 RECOGER
+    </div>
+
+    {pedidos
+      .filter(p => p.tipo === "recoger")
+      .map(p => {
+
+        const totalPedido = p.ticket.reduce(
+          (s, t) => s + (t.precio * t.cantidad),
+          0
+        );
+
+        return (
+          <div
+            key={p.id}
+            onClick={() => {
+              setPedidoActivoId(p.id);
+              setPedidoNumero(p.mesa);
+              setTipoPedido(p.tipo);
+            }}
+            className={`p-3 border-b flex justify-between ${
+              pedidoActivoId === p.id
+                ? "bg-black text-white"
+                : ""
+            }`}
+          >
+
+            <div className="text-2xl font-bold">
+              {p.mesa}
+            </div>
+
+            <div>
+              {totalPedido.toFixed(2)}€
+            </div>
+
+          </div>
+        );
+      })}
+  </div>
+
+</div>
     const totalPedido = p.ticket.reduce(
       (s, t) => s + (t.precio * t.cantidad),
       0
@@ -834,14 +979,7 @@ return (
       </div>
     );
   })}
-
-  <button
-    onClick={crearPedido}
-    className="w-full bg-green-600 text-white p-2 rounded mt-2"
-  >
-    ➕ NUEVO PEDIDO
-  </button>
-
+  
 </div>
 
     {/* HEADER */}

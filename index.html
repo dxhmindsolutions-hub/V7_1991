@@ -47,6 +47,8 @@ function POSApp() {
   const [numeroTicket, setNumeroTicket] = useState("");
   const [articulos, setArticulos] = useState({});
   const [ticket, setTicket] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
+const [pedidoActivoId, setPedidoActivoId] = useState(null);
   const [categoriaActiva, setCategoriaActiva] = useState(null);
   const [listaAbierta, setListaAbierta] = useState(true);
   const [pedidoNumero, setPedidoNumero] = useState("");
@@ -136,7 +138,42 @@ setArticulos(data);
     setMetodoPago("");
   }
 },[tipoPedido]);
+
+  useEffect(() => {
+
+  if (!pedidoActivoId) return;
+
+  setPedidos(prev =>
+    prev.map(p =>
+      p.id === pedidoActivoId
+        ? { ...p, ticket }
+        : p
+    )
+  );
+
+}, [ticket]);
   
+  const crearPedido = () => {
+
+  if (!pedidoNumero) {
+    alert("Introduce mesa");
+    return;
+  }
+
+  const nuevoPedido = {
+    id: Date.now().toString(),
+    mesa: pedidoNumero,
+    tipo: tipoPedido,
+    ticket: [],
+    fecha: Date.now()
+  };
+
+  setPedidos(prev => [...prev, nuevoPedido]);
+
+  setPedidoActivoId(nuevoPedido.id);
+
+  setTicket([]);
+};
   // AGREGAR ARTÍCULO
   const agregarArticulo = (ref) => {
   if (!pedidoNumero) return alert("Introduce mesa");
@@ -282,6 +319,14 @@ const guardarArticulo = () => {
     setNuevo({ ref, ...articulos[ref] });
     setEditando(ref);
   };
+  
+  const pedidoActivo = pedidos.find(p => p.id === pedidoActivoId);
+
+useEffect(() => {
+  if (pedidoActivo) {
+    setTicket(pedidoActivo.ticket || []);
+  }
+}, [pedidoActivoId]);
 
   // CÁLCULOS
   const total = ticket.reduce((s, t) => s + t.precio * t.cantidad, 0);
@@ -742,6 +787,62 @@ if (modoCocina) {
 // ====================
 return (
   <div className="p-4 max-w-md mx-auto">
+
+    {/* PEDIDOS ABIERTOS */}
+
+<div className="bg-white p-2 rounded shadow mb-4">
+
+  <div className="font-bold mb-2">
+    PEDIDOS ABIERTOS
+  </div>
+
+  {pedidos.map(p => {
+
+    const totalPedido = p.ticket.reduce(
+      (s, t) => s + (t.precio * t.cantidad),
+      0
+    );
+
+    return (
+      <div
+        key={p.id}
+        onClick={() => {
+          setPedidoActivoId(p.id);
+          setPedidoNumero(p.mesa);
+          setTipoPedido(p.tipo);
+        }}
+        className={`p-2 border-b cursor-pointer flex justify-between ${
+          pedidoActivoId === p.id
+            ? "bg-black text-white"
+            : ""
+        }`}
+      >
+
+        <div>
+          {p.tipo === "comer" && "🍽️"}
+          {p.tipo === "llevar" && "🥡"}
+          {p.tipo === "recoger" && "🚶"}
+
+          {" "}
+          {p.mesa}
+        </div>
+
+        <div>
+          {totalPedido.toFixed(2)}€
+        </div>
+
+      </div>
+    );
+  })}
+
+  <button
+    onClick={crearPedido}
+    className="w-full bg-green-600 text-white p-2 rounded mt-2"
+  >
+    ➕ NUEVO PEDIDO
+  </button>
+
+</div>
 
     {/* HEADER */}
     <div className="flex justify-between items-center mb-4">

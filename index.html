@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+
+<title>Mini POS</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+
+const { useState, useEffect } = React;
+  
+const calcularHoraEntrega = (tiempoValor) => {
+  if (!tiempoValor) return "";
+
+  const ahora = new Date();
+  let minutos = 0;
+
+  if (tiempoValor.includes("h")) {
+    const partes = tiempoValor.split("h");
+    minutos += parseInt(partes[0]) * 60;
+    if (partes[1]) minutos += parseInt(partes[1]);
+  } else {
+    minutos = parseInt(tiempoValor);
+  }
+
+  const entrega = new Date(ahora.getTime() + minutos * 60000);
+
+  return entrega.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+function POSApp() {
+  // ✅ Hooks movidos dentro del componente
+  const [numeroTicket, setNumeroTicket] = useState("");
+  const [articulos, setArticulos] = useState({});
+  const [ticket, setTicket] = useState([]);
+  const [categoriaActiva, setCategoriaActiva] = useState(null);
+  const [listaAbierta, setListaAbierta] = useState(true);
+  const [pedidoNumero, setPedidoNumero] = useState("");
+  const [comensales, setComensales] = useState("");
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [modoGestion, setModoGestion] = useState(false);
+  const [modoTicket, setModoTicket] = useState(false);
+  const [modoCocina, setModoCocina] = useState(false);
+  const [subMenuEditando, setSubMenuEditando] = useState(null);
+  const [tipoPedido, setTipoPedido] = useState("comer"); // comer | llevar | recoger
+ const [telefono, setTelefono] = useState("");
+ const [direccion, setDireccion] = useState("");
+  const [zona, setZona] = useState("");
+ const [tiempo, setTiempo] = useState("");
+  const [metodoPago, setMetodoPago] = useState("");
+  const [busqueda, setBusqueda] = useState("");
+  const [nuevo, setNuevo] = useState({ ref:"", nombre:"", precio:"", categoria:"" });
+  const [editando, setEditando] = useState(null);
+  const [busquedaGestion, setBusquedaGestion] = useState("");
+const [productoEditando, setProductoEditando] = useState(null);
+const [notaTemp, setNotaTemp] = useState("");
+const [checksTemp, setChecksTemp] = useState({
+  
+  
+  aceite: false,
+  gluten: false,
+  verdura: false,
+  carne: false,
+  huevo: false,
+  marisco: false,
+  frutossecos: false
+});
+  
+  const exportarArticulos = () => {
+  const dataStr = JSON.stringify(articulos, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "articulos_backup.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+};
+  const importarArticulos = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!confirm("Esto reemplazará TODOS los artículos. ¿Continuar?")) return;
+setArticulos(data);
+      alert("Artículos importados correctamente");
+    } catch (err) {
+      alert("Error al importar archivo");
+    }
+  };
+
+  reader.readAsText(file);
+};
+
+  const categorias = [
+    "Entrantes","Sopas","Arroces","Tallarines","Fideos","Huevos y verduras",
+    "Otras Sugerencias","Ternera","Pollo","Cerdo","Pato","Langostinos","Calamares",
+    "Tailandesa","Para Variar","Para Compartir","Tentempiés","Bebidas","Café & Té",
+    "Postres","Bar","Domicilo","Varios"
+  ];
+
+  useEffect(() => {
+    const data = localStorage.getItem("articulos");
+    if (data) setArticulos(JSON.parse(data));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("articulos", JSON.stringify(articulos));
+  }, [articulos]);
+
+  useEffect(()=>{
+  if(tipoPedido === "comer"){
+    setTelefono("");
+    setTiempo("");
+    setDireccion("");
+    setMetodoPago("");
+  }
+},[tipoPedido]);
+  
+  // AGREGAR ARTÍCULO
+  const agregarArticulo = (ref) => {
+  if (!pedidoNumero) return alert("Introduce mesa");
+
+  // 🔥 1. SI ES MENÚ → AÑADIR MENÚ + HIJOS
+  if (MENUS[ref]) {
+
+    const artMenu = articulos[ref];
+
+    // 👉 añadir línea del menú (visible en pantalla)
+    setTicket(prev => [
+      ...prev,
+     {
+  ref,
+  ...artMenu,
+  cantidad: 1,
+  esMenuPadre: true,
+  mods: {} // 🔥 AQUÍ GUARDAMOS MODIFICACIONES POR REF
+}
+    ]);
+
+    return;
+  }
+
+  // 🔥 2. ARTÍCULO PERSONALIZADO
+  if (ref === "0") {
+    const nombre = prompt("Nombre del producto:");
+    if (!nombre) return;
+
+    const precioStr = prompt("Precio:");
+    const precio = parseFloat(precioStr);
+
+    if (isNaN(precio)) {
+      alert("Precio inválido");
+      return;
+    }
+
+    setTicket([
+      ...ticket,
+      {
+        ref: "0",
+        nombre,
+        precio,
+        cantidad: 1
+      }
+    ]);
+    return;
+  }
+
+  // 🔹 3. NORMAL
+  const art = articulos[ref];
+  if (!art) return;
+
+  const i = ticket.findIndex(t => t.ref === ref);
+
+  if (i !== -1) {
+    const copia = [...ticket];
+    copia[i].cantidad++;
+    setTicket(copia);
+  } else {
+    setTicket([...ticket, { ref, ...art, cantidad: 1 }]);
+  }
+};
+
+  // CONTROLES TICKET
+  const sumar = (ref) => {
+    setTicket(ticket.map(t => t.ref === ref ? {...t, cantidad: t.cantidad+1} : t));
+  };
+
+  const restar = (ref) => {
+    setTicket(ticket
+      .map(t => t.ref === ref ? {...t, cantidad: t.cantidad-1} : t)
+      .filter(t => t.cantidad > 0));
+  };
+
+  const eliminarLinea = (ref) => {
+    if (!confirm("¿Eliminar producto del ticket?")) return;
+    setTicket(ticket.filter(t => t.ref !== ref));
+  };
+
+ const editarNota = (item) => {
+  setProductoEditando(item);
+  setNotaTemp(item.nota || "");
+
+  setChecksTemp({
+    aceite: item.aceite || false,
+    gluten: item.gluten || false,
+    verdura: item.verdura || false,
+    carne: item.carne || false,
+    huevo: item.huevo || false,
+    marisco: item.marisco || false,
+    frutossecos: item.frutossecos || false
+  });
+};
+
+const editarSubMenu = (menuRef, subRef) => {
+  setSubMenuEditando({ menuRef, subRef });
+
+  setNotaTemp("");
+  setChecksTemp({
+    aceite: false,
+    gluten: false,
+    verdura: false,
+    carne: false,
+    huevo: false,
+    marisco: false,
+    frutossecos: false
+  });
+};
+
+  // GESTIÓN
+  const eliminarArticulo = (ref) => {
+    const copia = {...articulos};
+    delete copia[ref];
+    setArticulos(copia);
+  };
+
+const guardarArticulo = () => {
+  if (!nuevo.ref) return;
+
+  // 🔥 NORMALIZAR REFERENCIA
+  const ref = nuevo.ref.trim();
+
+ if (!editando && articulos[ref]) {
+  alert("❌ Esta referencia ya existe");
+  return;
+}
+
+  setArticulos({
+    ...articulos,
+    [ref]: {
+      nombre: nuevo.nombre,
+      precio: parseFloat(nuevo.precio),
+      categoria: nuevo.categoria
+    }
+  });
+
+  setNuevo({ ref:"", nombre:"", precio:"", categoria:"" });
+  setEditando(null);
+};
+
+  const editarArticulo = (ref) => {
+    setNuevo({ ref, ...articulos[ref] });
+    setEditando(ref);
+  };
+
+  // CÁLCULOS
+  const total = ticket.reduce((s, t) => s + t.precio * t.cantidad, 0);
+  const base = total / 1.1;
+  const iva = total - base;
+  const porPersona = comensales ? (total / comensales).toFixed(2) : null;
+const MENUS = {
+  "303": { // MENU 2A
+    items: [
+      ["1",1],
+      ["4",1],
+      ["22",1],
+      ["58",1],
+      ["44",1]
+    ]
+  },
+
+  "304": { // MENU 2B
+    items: [
+      ["1",1],
+      ["4",1],
+      ["26",1],
+      ["65",1],
+      ["75",1]
+    ]
+  },
+
+  "305": { // MENU 3P
+    items: [
+      ["1",1],
+      ["4",1.5],
+      ["3",1],
+      ["22",1],
+      ["58",1],
+      ["44",1],
+      ["26",1]
+    ]
+  },
+
+  "306": { // MENU 4P
+    items: [
+      ["1",1],
+      ["4",2],
+      ["3",1],
+      ["22",2],
+      ["58",2],
+      ["65",1],
+      ["124",1]
+    ]
+  },
+
+  "307": { // MENU 5P
+    items: [
+      ["1",2],
+      ["4",2.5],
+      ["3",1],
+      ["22",2],
+      ["58",2],
+      ["37",1],
+      ["124",1],
+      ["65",1]
+    ]
+  },
+
+  "308": { // MENU 6P
+    items: [
+      ["1",3],
+      ["4",3],
+      ["3",1],
+      ["22",3],
+      ["58",2],
+      ["37",1],
+      ["124",1],
+      ["65",1],
+      ["74",1]
+    ]
+  }
+};
+ const itemsNuevosCocina = () => {
+  let resultado = [];
+
+  ticket.forEach(t => {
+
+// 🔥 MENÚ → FORMATO CORTO
+if (MENUS[t.ref]) {
+
+  const menu = MENUS[t.ref];
+
+ const refs = menu.items.map(([r, mult]) => {
+
+  const mod = t.mods?.[r];
+  const cantidad = t.cantidad * mult;
+
+  if (!mod) return `${cantidad}x${r}`;
+
+  const lineas = mod.split("\n");
+
+  return [
+    `${cantidad}x${r}  ${lineas[0]}`,
+    ...lineas.slice(1).map(l => `      ${l}`)
+  ].join("\n");
+
+});
+
+  resultado.push({
+    esMenu: true,
+    nombre: `${t.cantidad} x ${t.nombre}`,
+    lineas: refs
+  });
+
+} 
+// 🔹 PRODUCTO NORMAL
+else {
+  resultado.push(t);
+}
+
+  });
+
+  return resultado;
+};
+  const generarNumeroTicket = () => {
+  
+    const ahora = new Date();
+    const dia = String(ahora.getDate()).padStart(2, "0");
+    const mes = String(ahora.getMonth() + 1).padStart(2, "0");
+    const hora = String(ahora.getHours()).padStart(2, "0");
+    const min = String(ahora.getMinutes()).padStart(2, "0");
+
+    const fechaKey = `${dia}${mes}`;
+    let data = JSON.parse(localStorage.getItem("ticketData")) || {};
+    if (!data[fechaKey]) data[fechaKey] = 0;
+    data[fechaKey]++;
+    localStorage.setItem("ticketData", JSON.stringify(data));
+
+    const numero = String(data[fechaKey]).padStart(5, "0");
+    return `${fechaKey}-${hora}${min}-${numero}`;
+  };
+
+  const lista = categoriaActiva
+    ? Object.entries(articulos).filter(([_, a]) => a.categoria === categoriaActiva)
+    : [];
+
+  // ====================
+  // 🎟️ MODO TICKET
+  // ====================
+if (modoCocina) {
+  return (
+    <div id="cocina" className="p-4 bg-white font-mono">
+
+      {/* CABECERA */}
+   
+
+      {/* MESA GRANDE */}
+      <div className="text-center text-3xl font-bold">
+  {tipoPedido === "comer" && `MESA ${pedidoNumero}`}
+  {tipoPedido === "llevar" && `🥡 LLEVAR ${pedidoNumero}`}
+  {tipoPedido === "recoger" && `🚶 RECOGER ${pedidoNumero}`}
+</div>
+
+ {(tipoPedido === "llevar" || tipoPedido === "recoger") && tiempo && (
+  <div className="text-center text-xl font-bold mt-1">
+    ⏱ {tiempo}
+  </div>
+)}
+
+      {/* HORA */}
+      <div className="text-center text-sm mb-2">
+        {new Date().toLocaleTimeString()}
+      </div>
+
+
+ {/* PRODUCTOS ORDENADOS */}
+<>
+  {itemsNuevosCocina()
+    .sort((a, b) => {
+      const esBebida = (item) =>
+        item.categoria === "Bebidas" ||
+        item.categoria === "Café & Té" ||
+        item.categoria === "Bar";
+
+      if (esBebida(a) && !esBebida(b)) return 1;
+      if (!esBebida(a) && esBebida(b)) return -1;
+      return 0;
+    })
+    .map((t, i) => {
+
+      if (t.esMenu) {
+        return (
+          <div key={i} className="mb-2">
+            <div className="text-2xl font-bold">{t.nombre}</div>
+
+            <div className="text-xl font-bold pl-6 leading-tight">
+              {t.lineas.map((l, idx) => {
+                const limpio = l.replace(/[()]/g, "");
+                const partes = limpio.split("\n");
+
+                return (
+                  <div key={idx}>
+                    {partes.map((linea, i) => (
+                      <div key={i} className={i > 0 ? "pl-8" : ""}>
+                        {linea}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div key={i} className="mb-1">
+          <div className="flex items-end gap-2">
+            <div className="text-2xl font-bold whitespace-nowrap">
+              {t.cantidad} x {t.ref}
+            </div>
+
+            {(t.verdura || t.carne || t.gluten || t.aceite || t.huevo || t.marisco || t.frutossecos || t.nota) && (
+              <div className="text-lg font-bold leading-tight">
+                {[
+                  t.verdura && "NO VERDURA",
+                  t.carne && "NO CARNE",
+                  t.gluten && "NO GLUTEN",
+                  t.aceite && "ACEITE",
+                  t.huevo && "NO HUEVO",
+                  t.marisco && "ALERGIA MARISCO",
+                  t.frutossecos && "ALERGIA FRUTOS SECOS",
+                  t.nota
+                ].filter(Boolean).join(" / ")}
+              </div>
+            )}
+          </div>
+
+          <div className="text-xs leading-none">
+            {t.nombre?.toUpperCase()}
+          </div>
+
+          <div className="border-b border-dashed border-black mt-1"></div>
+        </div>
+      );
+    })}
+
+  {(tipoPedido === "llevar" || tipoPedido === "recoger") && (
+    <div className="mt-3 text-xl font-bold">
+      {direccion && <div>📍 {direccion} {zona && `- ${zona}`}</div>}
+      {telefono && <div>📞 {telefono}</div>}
+      {metodoPago && <div>💳 {metodoPago}</div>}
+      {tiempo && (
+        <div className="mt-1">
+          🕒 ENTREGA: {calcularHoraEntrega(tiempo)}
+        </div>
+      )}
+    </div>
+  )}
+</>
+
+      {/* BOTONES */}
+      <div className="flex gap-2 mt-4">
+        <button
+          onClick={() => window.print()}
+          className="w-1/2 bg-green-600 text-white p-3 rounded text-lg"
+        >
+          🖨️ Imprimir
+        </button>
+
+        <button
+          onClick={()=>setModoCocina(false)}
+          className="w-1/2 bg-black text-white p-3 rounded text-lg"
+        >
+          ← Volver
+        </button>
+      </div>
+
+    </div>
+  );
+}
+  if (modoTicket) {
+    return (
+      <div id="ticket" className="p-4 bg-white text-xs font-mono">
+        <div className="text-center">
+          <div className="text-lg font-bold">FORTUNA</div>
+          <div>XIOAXIONG</div>
+          <div>NIF/CIF: 48025271Y</div>
+          <div>C/ RAMBLA SAMA 70</div>
+          <div>08800 VILANOVA I LA GELTRU</div>
+          <div>Tel: 938156417 </div>
+        </div>
+
+        <div className="text-center my-2">------------------------------------</div>
+        <div className="text-center text-[11px] my-1">COMPROBANTE · <span className="font-bold">NO FACTURA</span></div>
+        <div className="text-center text-[11px]">TICKET {numeroTicket}</div>
+        <div className="text-center my-2">------------------------------------</div>
+        <div className="text-center text-xl font-bold">MESA {pedidoNumero}</div>
+        <div className="text-center mb-2">------------------------------------</div>
+        
+      
+{/* CABECERA */}
+<div className="flex justify-between font-bold border-b pb-1 mb-1">
+  <span className="w-8">CAN.</span>
+  <span className="w-12">PRE.</span>
+  <span className="flex-1 text-left pl-2">CONCEPTO</span>
+  <span className="w-12 text-right">SUMA</span>
+</div>
+
+{/* PRODUCTOS */}
+{ticket.map((t,i)=>(
+  <div key={i} className="flex justify-between text-xs font-mono">
+
+    {/* IZQUIERDA */}
+    <span>
+      {t.cantidad} x {t.precio.toFixed(2)} {t.nombre}
+    </span>
+
+    {/* DERECHA */}
+    <span className="ml-2">
+      {(t.precio*t.cantidad).toFixed(2)}
+    </span>
+
+  </div>
+))}
+
+        <div className="text-center my-2">------------------------------------</div>
+
+        <div className="flex justify-between text-xl font-bold">
+          <span>TOTAL</span>
+          <span>{total.toFixed(2)}€</span>
+        </div>
+
+        {porPersona && (
+          <div className="flex justify-between mt-1">
+            <span>P/PERSONA</span>
+            <span>{porPersona}€</span>
+          </div>
+        )}
+
+        <div className="text-center text-[10px] mt-1">Base: {base.toFixed(2)}€ · IVA 10%: {iva.toFixed(2)}€</div>
+
+        <div className="text-center my-2">------------------------------------</div>
+        <div className="text-center">IVA incluido</div>
+        <div className="text-center">Gracias por su visita</div>
+
+        <div className="flex gap-2 mt-4">
+          <button onClick={() => window.print()} className="w-1/2 bg-green-600 text-white p-2 rounded">🖨️ Imprimir</button>
+          <button onClick={()=>setModoTicket(false)} className="w-1/2 bg-black text-white p-2 rounded">← Volver</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ====================
+  // 🛠️ MODO GESTIÓN
+  // ====================
+  if (modoGestion) {
+    return (
+      <div className="p-4 max-w-md mx-auto">
+        <input
+  placeholder="Buscar artículo..."
+  value={busquedaGestion}
+  onChange={e=>setBusquedaGestion(e.target.value)}
+  className="w-full p-2 border rounded mb-3"
+/>
+        <button onClick={()=>setModoGestion(false)} className="mb-4 bg-black text-white p-2 rounded-xl">← Volver</button>
+        <div className="flex gap-2 mb-4">
+<button
+  onClick={()=>{
+    const ok = prompt("Escribe BORRAR para eliminar todo");
+    if(ok === "BORRAR"){
+      localStorage.setItem("backup_articulos", JSON.stringify(articulos));
+      setArticulos({});
+      alert("Artículos borrados (backup guardado)");
+    }
+  }}
+  className="w-full bg-red-600 text-white p-2 rounded"
+>
+  ⚠️ Reset total
+</button>
+  <button
+    onClick={exportarArticulos}
+    className="w-1/2 bg-blue-600 text-white p-2 rounded"
+  >
+    ⬇️ Exportar
+  </button>
+
+  <label className="w-1/2 bg-orange-500 text-white p-2 rounded text-center cursor-pointer">
+    ⬆️ Importar
+    <input
+      type="file"
+      accept="application/json"
+      onChange={importarArticulos}
+      className="hidden"
+    />
+  </label>
+</div>
+
+        <div className="bg-white p-4 rounded-2xl shadow space-y-2 mb-4">
+          <input placeholder="Referencia" value={nuevo.ref} onChange={e=>setNuevo({...nuevo, ref:e.target.value})} className="w-full p-2 border rounded"/>
+          <input placeholder="Nombre" value={nuevo.nombre} onChange={e=>setNuevo({...nuevo, nombre:e.target.value})} className="w-full p-2 border rounded"/>
+          <input placeholder="Precio" value={nuevo.precio} onChange={e=>setNuevo({...nuevo, precio:e.target.value})} className="w-full p-2 border rounded"/>
+          <select value={nuevo.categoria} onChange={e=>setNuevo({...nuevo, categoria:e.target.value})} className="w-full p-2 border rounded">
+            <option value="">Categoría</option>
+            {categorias.map(c=><option key={c}>{c}</option>)}
+          </select>
+          <button onClick={guardarArticulo} className="w-full bg-green-500 text-white p-2 rounded-xl">{editando ? "Actualizar" : "Guardar"}</button>
+        </div>
+
+        <div className="text-sm mb-2">
+  Total: {Object.keys(articulos).length} artículos
+</div>
+
+        <div className="bg-white rounded-2xl shadow">
+       {Object.entries(articulos)
+         .sort((a,b)=>{
+  const refA = a[0];
+  const refB = b[0];
+
+  const numA = parseInt(refA);
+  const numB = parseInt(refB);
+
+  if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+
+  return refA.localeCompare(refB);
+})
+  .filter(([ref,a]) =>
+    a.nombre.toLowerCase().includes(busquedaGestion.toLowerCase()) ||
+    ref.includes(busquedaGestion)
+  )
+  .sort((a,b)=>Number(a[0]) - Number(b[0]))
+  .map(([ref,a])=>(
+            <div key={ref} className="p-3 border-b flex justify-between items-center">
+             <div className="flex items-center gap-3">
+
+  {/* REFERENCIA */}
+  <div className="bg-black text-white px-2 py-1 rounded text-sm font-bold min-w-[45px] text-center">
+    {ref}
+  </div>
+
+  {/* NOMBRE Y PRECIO */}
+  <div>
+    <div className="font-medium">{a.nombre}</div>
+    <div className="text-xs text-gray-500">{a.precio}€</div>
+  </div>
+
+</div>
+              <div className="flex gap-3 text-lg">
+                <button onClick={()=>editarArticulo(ref)} className="text-blue-500">✏️</button>
+                <button onClick={()=>{ if(confirm(`¿Eliminar ${a.nombre}?`)) eliminarArticulo(ref)}} className="text-red-500">❌</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+// ====================
+// 🧾 APP NORMAL
+// ====================
+return (
+  <div className="p-4 max-w-md mx-auto">
+
+    {/* HEADER */}
+    <div className="flex justify-between items-center mb-4">
+      <button
+        onClick={() => setMenuAbierto(true)}
+        className="text-2xl"
+      >
+        ☰
+      </button>
+
+      <h1 className="font-bold">Mini POS</h1>
+
+      <button onClick={() => setModoGestion(true)}>
+        ⚙️
+      </button>
+    </div>
+
+    {/* OVERLAY */}
+    {menuAbierto && (
+      <div
+        className="fixed inset-0 bg-black bg-opacity-40 z-40"
+        onClick={() => setMenuAbierto(false)}
+      />
+    )}
+
+    {/* MENU LATERAL */}
+    <div
+      className={`fixed top-0 left-0 w-64 h-full bg-white z-50 transform ${
+        menuAbierto ? "translate-x-0" : "-translate-x-full"
+      } transition duration-300 ease-in-out overflow-y-auto pb-10 shadow-lg`}
+    >
+      <div className="p-4 font-bold border-b">Categorías</div>
+
+      {categorias.map(c => (
+        <button
+          key={c}
+          onClick={() => {
+            setCategoriaActiva(c);
+            setMenuAbierto(false);
+          }}
+          className={`block w-full text-left p-3 ${
+            categoriaActiva === c ? "bg-black text-white" : "bg-gray-100"
+          }`}
+        >
+          {c}
+        </button>
+      ))}
+    </div>
+
+      <div className="flex gap-2 mb-3">
+
+  <button
+    onClick={()=>setTipoPedido("comer")}
+    className={`w-1/3 p-2 rounded ${tipoPedido==="comer" ? "bg-black text-white" : "bg-gray-200"}`}
+  >
+    🍽️ Comer
+  </button>
+
+  <button
+    onClick={()=>setTipoPedido("llevar")}
+    className={`w-1/3 p-2 rounded ${tipoPedido==="llevar" ? "bg-black text-white" : "bg-gray-200"}`}
+  >
+    🥡 Llevar
+  </button>
+
+  <button
+    onClick={()=>setTipoPedido("recoger")}
+    className={`w-1/3 p-2 rounded ${tipoPedido==="recoger" ? "bg-black text-white" : "bg-gray-200"}`}
+  >
+    🚶 Recoger
+  </button>
+
+</div>
+
+      <div className="flex gap-2 mb-3">
+        <input placeholder="Mesa" value={pedidoNumero} onChange={e=>setPedidoNumero(e.target.value)} className="w-1/2 p-3 border rounded"/>
+        <input placeholder="Comensales" value={comensales} onChange={e=>setComensales(e.target.value)} className="w-1/2 p-3 border rounded"/>
+      </div>
+
+     
+      <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} onKeyDown={(e)=>{ if(e.key==="Enter"){agregarArticulo(busqueda); setBusqueda("");}}} placeholder="Referencia..." className="w-full p-3 border rounded mb-4"/>
+      
+{categoriaActiva && (
+  <div className="flex justify-between items-center mb-2">
+    <div className="font-bold">
+      {categoriaActiva}
+    </div>
+
+    <button
+      onClick={() => setListaAbierta(!listaAbierta)}
+      className="text-sm bg-black text-white px-2 py-1 rounded"
+    >
+      {listaAbierta ? "⬆️ Ocultar" : "⬇️ Mostrar"}
+    </button>
+  </div>
+)}
+   {lista.length > 0 && listaAbierta && (
+  <div className="bg-white rounded shadow mb-4">
+    {lista.map(([ref, a]) => (
+      <div
+        key={ref}
+        onClick={() => agregarArticulo(ref)}
+        className="p-3 border-b grid grid-cols-[70px_1fr_auto] items-center"
+      >
+        {/* REF */}
+        <div className="font-bold">
+          {ref}
+        </div>
+
+        {/* NOMBRE */}
+        <div className="truncate">
+          {a.nombre}
+        </div>
+
+        {/* PRECIO */}
+        <div className="text-right font-mono tabular-nums w-full">
+          {a.precio}€
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
+{ticket.map((t, i) => {
+
+  // 🔥 NO mostrar hijos sueltos
+  if (t.esHijoMenu) return null;
+
+  const menu = MENUS?.[t.ref];
+
+  return (
+    <div key={i}>
+
+      <div className="border-b py-2">
+
+        <div className="flex items-start justify-between">
+
+          {/* IZQUIERDA */}
+          <div className="flex flex-col flex-1">
+
+            <div className="text-xl font-bold leading-none">
+              {t.cantidad} x {t.ref}
+            </div>
+
+            <div className="text-[10px] text-gray-500 leading-none">
+              {t.nombre}
+            </div>
+
+            {menu && (
+  <div className="text-[10px] font-bold pl-2 mt-1 leading-tight">
+    {menu.items.map(([r]) => {
+      const mod = t.mods?.[r] ?? "";
+
+      return (
+        <div
+          key={r}
+          onClick={() => editarSubMenu(t.ref, r)}
+          className="cursor-pointer"
+        >
+          {r}{mod ? ` ${mod}` : ""}
+        </div>
+      );
+    })}
+  </div>
+)}
+
+            {(t.nota || t.aceite || t.gluten || t.verdura || t.carne || t.huevo || t.marisco || t.frutossecos) && (
+              <div className="text-[10px] font-bold leading-tight">
+                {[
+                  t.verdura && "NO VERDURA",
+                  t.carne && "NO CARNE",
+                  t.gluten && "SIN GLUTEN",
+                  t.aceite && "ACEITE",
+                  t.huevo && "NO HUEVO",
+                  t.marisco && "ALERGIA MARISCO",
+                  t.frutossecos && "ALERGIA FRUTOS SECOS",
+                  t.nota
+                ].filter(Boolean).join(" / ")}
+              </div>
+            )}
+
+          </div>
+
+          {/* DERECHA */}
+          <div className="flex items-center gap-2 font-mono font-bold">
+
+            <div className="flex gap-1 text-sm">
+              <button onClick={(e) => { e.stopPropagation(); restar(t.ref); }}>➖</button>
+              <button onClick={(e) => { e.stopPropagation(); sumar(t.ref); }}>➕</button>
+              <button onClick={(e) => { e.stopPropagation(); eliminarLinea(t.ref); }}>❌</button>
+              <button onClick={(e) => { e.stopPropagation(); editarNota(t); }}>📝</button>
+            </div>
+
+            <div className="text-right min-w-[60px]">
+              {(t.precio * t.cantidad).toFixed(2)}€
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+
+})}
+
+{/* 👇 ESTE BLOQUE VA FUERA DEL MAP */}
+<div className="border-t mt-2 pt-2 flex justify-between font-bold">
+  <span>Total</span>
+  <span>{total.toFixed(2)}€</span>
+</div>
+
+   <div className="flex gap-2 mt-3">
+
+  <button
+    onClick={() => setModoCocina(true)}
+    className="w-1/2 bg-orange-500 text-white p-2 rounded"
+  >
+    🍳 Cocina
+  </button>
+
+  <button
+    onClick={() => {
+      setNumeroTicket(generarNumeroTicket());
+      setModoTicket(true);
+    }}
+    className="w-1/2 bg-black text-white p-2 rounded"
+  >
+    🧾 Ticket
+  </button>
+
+</div>
+
+  {porPersona && (
+    <div className="text-sm text-gray-600">
+      Por persona: {porPersona}€
+    </div>
+  )}
+
+    {(tipoPedido === "llevar" || tipoPedido === "recoger") && (
+  <div className="space-y-2 mb-4">
+
+    <div className="flex gap-2">
+
+  {/* DIRECCIÓN */}
+  <input
+    placeholder="📍 Dirección"
+    value={direccion}
+    onChange={e=>setDireccion(e.target.value)}
+    className="w-2/3 p-3 border rounded"
+  />
+
+  {/* ZONA */}
+  <select
+    value={zona}
+    onChange={e=>setZona(e.target.value)}
+    className="w-1/3 p-3 border rounded"
+  >
+    <option value="">Zona</option>
+    <option>VNG</option>
+    <option>TACÓ</option>
+    <option>TENIS</option>
+    <option>COLLADA</option>
+    <option>FONDO SOMELLA</option>
+    <option>PRAT DE VILANOVA</option>
+    <option>URB. SANTA MARIA</option>
+    <option>ROQUETES</option>
+    <option>CUBELLES</option>
+    <option>CAMPING VILANOVA PARK</option>
+    <option>BAR HIGUERA</option>
+    <option>CINES ODEON</option>
+  </select>
+
+</div>
+
+    <input
+      placeholder="📞 Teléfono"
+      value={telefono}
+      onChange={e=>setTelefono(e.target.value)}
+      className="w-full p-3 border rounded"
+    />
+
+    <select
+      value={tiempo}
+      onChange={e=>setTiempo(e.target.value)}
+      className="w-full p-3 border rounded"
+    >
+      <option value="">⏱ Tiempo estimado</option>
+      <option>10 min</option>
+      <option>15 min</option>
+      <option>20 min</option>
+      <option>30 min</option>
+      <option>40 min</option>
+      <option>50 min</option>
+      <option>1h</option>
+      <option>1h 10min</option>
+      <option>1h 15min</option>
+      <option>1h 20min</option>
+      <option>1h 30min</option>
+    </select>
+
+    {/* 🔥 BOTONES DENTRO */}
+    <div className="flex gap-2">
+
+      <button
+        onClick={()=>setMetodoPago("EFECTIVO")}
+        className={`w-1/2 p-2 rounded ${
+          metodoPago === "EFECTIVO" ? "bg-green-600 text-white" : "bg-gray-200"
+        }`}
+      >
+        💵 Efectivo
+      </button>
+
+      <button
+        onClick={()=>setMetodoPago("VISA")}
+        className={`w-1/2 p-2 rounded ${
+          metodoPago === "VISA" ? "bg-blue-600 text-white" : "bg-gray-200"
+        }`}
+      >
+        💳 Visa
+      </button>
+
+    </div>
+
+  </div>
+)}
+      {/* 🔥 MODAL NOTAS */}
+      {productoEditando && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-xl w-80">
+
+            <div className="font-bold mb-2">MODIFICACIONES</div>
+
+            <input
+              placeholder="NOTA..."
+              value={notaTemp}
+              onChange={e => setNotaTemp(e.target.value)}
+              className="w-full border p-2 mb-3"
+            />
+
+            {[
+              ["aceite", "ACEITE"],
+              ["gluten", "SIN GLUTEN"],
+              ["verdura", "NO VERDURA"],
+              ["carne", "NO CARNE"],
+              ["huevo", "NO HUEVO"],
+              ["marisco", "ALERGIA MARISCO"],
+              ["frutossecos", "ALERGIA FRUTOS SECOS"]
+            ].map(([key, label]) => (
+              <div key={key} className="flex justify-between items-center mb-1">
+                <span>{label}</span>
+                <input
+                  type="checkbox"
+                  checked={checksTemp[key]}
+                  onChange={() =>
+                    setChecksTemp({
+                      ...checksTemp,
+                      [key]: !checksTemp[key]
+                    })
+                  }
+                />
+              </div>
+            ))}
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => {
+                  setTicket(ticket.map(t =>
+                    t === productoEditando
+                      ? {
+                          ...t,
+                          nota: notaTemp,
+                          ...checksTemp
+                        }
+                      : t
+                  ));
+                  setProductoEditando(null);
+                }}
+                className="w-1/2 bg-green-600 text-white p-2 rounded"
+              >
+                GUARDAR
+              </button>
+
+              <button
+                onClick={() => setProductoEditando(null)}
+                className="w-1/2 bg-gray-400 text-white p-2 rounded"
+              >
+                CANCELAR
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {subMenuEditando && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-4 rounded-xl w-80">
+
+      <div className="font-bold mb-2">
+        MODIFICAR {subMenuEditando.subRef}
+      </div>
+
+      <input
+        placeholder="NOTA..."
+        value={notaTemp}
+        onChange={e => setNotaTemp(e.target.value)}
+        className="w-full border p-2 mb-3"
+      />
+
+      {[
+        ["aceite", "ACEITE"],
+        ["gluten", "SIN GLUTEN"],
+        ["verdura", "NO VERDURA"],
+        ["carne", "NO CARNE"],
+        ["huevo", "NO HUEVO"],
+        ["marisco", "ALERGIA MARISCO"],
+        ["frutossecos", "ALERGIA FRUTOS SECOS"]
+      ].map(([key, label]) => (
+        <div key={key} className="flex justify-between items-center mb-1">
+          <span>{label}</span>
+          <input
+            type="checkbox"
+            checked={checksTemp[key]}
+            onChange={() =>
+              setChecksTemp({
+                ...checksTemp,
+                [key]: !checksTemp[key]
+              })
+            }
+          />
+        </div>
+      ))}
+
+      <div className="flex gap-2 mt-4">
+        <button
+          onClick={() => {
+            const texto = [
+              checksTemp.aceite && "ACEITE",
+              checksTemp.gluten && "SIN GLUTEN",
+              checksTemp.verdura && "NO VERDURA",
+              checksTemp.carne && "NO CARNE",
+              checksTemp.huevo && "NO HUEVO",
+              checksTemp.marisco && "ALERGIA MARISCO",
+              checksTemp.frutossecos && "ALERGIA FRUTOS SECOS",
+              notaTemp
+            ].filter(Boolean).join("\n");
+
+            setTicket(ticket.map(t => {
+              if (t.ref === subMenuEditando.menuRef && t.esMenuPadre) {
+                return {
+                  ...t,
+                  mods: {
+                    ...t.mods,
+                    [subMenuEditando.subRef]: texto.toUpperCase()
+                  }
+                };
+              }
+              return t;
+            }));
+
+            setSubMenuEditando(null);
+          }}
+          className="w-1/2 bg-green-600 text-white p-2 rounded"
+        >
+          GUARDAR
+        </button>
+
+        <button
+          onClick={() => setSubMenuEditando(null)}
+          className="w-1/2 bg-gray-400 text-white p-2 rounded"
+        >
+          CANCELAR
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<POSApp />);
+
+  // =========================
+  // Registrar Service Worker
+  // =========================
+
+  if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker registrado', reg))
+      .catch(err => console.log('Error registrando SW', err));
+  });
+}
+
+</script>
+
+<style>
+@media print {
+  body * { visibility: hidden; }
+  #ticket, #ticket * { visibility: visible; }
+  #cocina, #cocina * { visibility: visible; } /* 🔹 Añadido para comanda */
+  #ticket, #cocina { position: absolute; top: 0; left: 0; width: 100%; }
+}
+</style>
+
+</body>
+</html>

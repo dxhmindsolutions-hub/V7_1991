@@ -809,597 +809,431 @@ if (modoCocina) {
 // 🧾 APP NORMAL
 // ====================
 return (
- <div className="p-4 max-w-md mx-auto">
+  <div className="p-4 max-w-md mx-auto">
 
-  {/* 🔴 PANTALLA TOMAR PEDIDOS */}
-  {modoPedidos && (
-    <>
-      
-      {/* TODO LO QUE YA TIENES (TODO TU CÓDIGO ACTUAL) */}
-      
-    </>
-  )}
+    {/* 🔴 PANTALLA TOMAR PEDIDOS */}
+    {modoPedidos && (
+      <>
 
-  {/* 🔵 PANTALLA PEDIDOS ABIERTOS */}
-  {modoAbiertos && (
-    <div className="bg-white p-2 rounded shadow mb-4">
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-4">
 
-      <div className="flex justify-between mb-4">
-        <h2 className="font-bold">📋 Pedidos abiertos</h2>
+          <button
+            onClick={() => setMenuAbierto(true)}
+            className="text-2xl"
+          >
+            ☰
+          </button>
 
-        <button
-          onClick={() => {
-            setModoPedidos(true);
-            setModoAbiertos(false);
-          }}
-          className="bg-black text-white px-3 py-1 rounded"
-        >
-          Volver
-        </button>
-      </div>
+          <h1 className="font-bold">Mini POS</h1>
 
-      {/* 🍽️ COMER */}
-      <div className="mb-3">
-        <div className="font-bold">🍽️ COMER</div>
+          <div className="flex gap-2">
 
-        {pedidos.filter(p => p.tipo === "comer").map(p => (
-          <div key={p.id} className="flex justify-between border-b p-2">
-            <span>{p.mesa}</span>
-            <span>{p.total}€</span>
+            <button
+              onClick={() => {
+                setModoPedidos(false);
+                setModoAbiertos(true);
+              }}
+            >
+              📋 Pedidos
+            </button>
+
+            <button onClick={() => setModoGestion(true)}>
+              ⚙️
+            </button>
+
           </div>
-        ))}
-      </div>
-
-      {/* 🥡 LLEVAR */}
-      <div className="mb-3">
-        <div className="font-bold">🥡 LLEVAR</div>
-
-        {pedidos.filter(p => p.tipo === "llevar").map(p => (
-          <div key={p.id} className="flex justify-between border-b p-2">
-            <span>{p.mesa}</span>
-            <span>{p.total}€</span>
-          </div>
-        ))}
-      </div>
-
-      {/* 🚶 RECOGER */}
-      <div>
-        <div className="font-bold">🚶 RECOGER</div>
-
-        {pedidos.filter(p => p.tipo === "recoger").map(p => (
-          <div key={p.id} className="flex justify-between border-b p-2">
-            <span>{p.mesa}</span>
-            <span>{p.total}€</span>
-          </div>
-        ))}
-      </div>
-
-    </div>
-  )}
-
-</div>
-    {/* HEADER */}
-<div className="flex justify-between items-center mb-4">
-  
-  <button
-    onClick={() => setMenuAbierto(true)}
-    className="text-2xl"
-  >
-    ☰
-  </button>
-
-  <h1 className="font-bold">Mini POS</h1>
-
-  <div className="flex gap-2">
-
-   <button
-  onClick={() => {
-    setModoPedidos(false);
-    setModoAbiertos(true);
-  }}
->
-  📋 Pedidos
-</button>
-
-    <button onClick={() => setModoGestion(true)}>
-      ⚙️
-    </button>
-
-  </div>
-</div>
-
-    {/* OVERLAY */}
-    {menuAbierto && (
-      <div
-        className="fixed inset-0 bg-black bg-opacity-40 z-40"
-        onClick={() => setMenuAbierto(false)}
-      />
-    )}
-
-    {/* MENU LATERAL */}
-    <div
-      className={`fixed top-0 left-0 w-64 h-full bg-white z-50 transform ${
-        menuAbierto ? "translate-x-0" : "-translate-x-full"
-      } transition duration-300 ease-in-out overflow-y-auto pb-10 shadow-lg`}
-    >
-      <div className="p-4 font-bold border-b">Categorías</div>
-
-      {categorias.map(c => (
-        <button
-          key={c}
-          onClick={() => {
-            setCategoriaActiva(c);
-            setMenuAbierto(false);
-          }}
-          className={`block w-full text-left p-3 ${
-            categoriaActiva === c ? "bg-black text-white" : "bg-gray-100"
-          }`}
-        >
-          {c}
-        </button>
-      ))}
-    </div>
-
-      <div className="flex gap-2 mb-3">
-
-  <button
-    onClick={()=>setTipoPedido("comer")}
-    className={`w-1/3 p-2 rounded ${tipoPedido==="comer" ? "bg-black text-white" : "bg-gray-200"}`}
-  >
-    🍽️ Comer
-  </button>
-
-  <button
-    onClick={()=>setTipoPedido("llevar")}
-    className={`w-1/3 p-2 rounded ${tipoPedido==="llevar" ? "bg-black text-white" : "bg-gray-200"}`}
-  >
-    🥡 Llevar
-  </button>
-
-  <button
-    onClick={()=>setTipoPedido("recoger")}
-    className={`w-1/3 p-2 rounded ${tipoPedido==="recoger" ? "bg-black text-white" : "bg-gray-200"}`}
-  >
-    🚶 Recoger
-  </button>
-
-</div>
-
-      <div className="flex gap-2 mb-3">
-        <input placeholder="Mesa" value={pedidoNumero} onChange={e=>setPedidoNumero(e.target.value)} className="w-1/2 p-3 border rounded"/>
-        <input placeholder="Comensales" value={comensales} onChange={e=>setComensales(e.target.value)} className="w-1/2 p-3 border rounded"/>
-      </div>
-
-     
-      <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} onKeyDown={(e)=>{ if(e.key==="Enter"){agregarArticulo(busqueda); setBusqueda("");}}} placeholder="Referencia..." className="w-full p-3 border rounded mb-4"/>
-      
-{categoriaActiva && (
-  <div className="flex justify-between items-center mb-2">
-    <div className="font-bold">
-      {categoriaActiva}
-    </div>
-
-    <button
-      onClick={() => setListaAbierta(!listaAbierta)}
-      className="text-sm bg-black text-white px-2 py-1 rounded"
-    >
-      {listaAbierta ? "⬆️ Ocultar" : "⬇️ Mostrar"}
-    </button>
-  </div>
-)}
-   {lista.length > 0 && listaAbierta && (
-  <div className="bg-white rounded shadow mb-4">
-    {lista.map(([ref, a]) => (
-      <div
-        key={ref}
-        onClick={() => agregarArticulo(ref)}
-        className="p-3 border-b grid grid-cols-[70px_1fr_auto] items-center"
-      >
-        {/* REF */}
-        <div className="font-bold">
-          {ref}
         </div>
 
-        {/* NOMBRE */}
-        <div className="truncate">
-          {a.nombre}
-        </div>
+        {/* OVERLAY */}
+        {menuAbierto && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-40 z-40"
+            onClick={() => setMenuAbierto(false)}
+          />
+        )}
 
-        {/* PRECIO */}
-        <div className="text-right font-mono tabular-nums w-full">
-          {a.precio}€
-        </div>
-      </div>
-    ))}
-  </div>
-)}
-
-{ticket.map((t, i) => {
-
-  // 🔥 NO mostrar hijos sueltos
-  if (t.esHijoMenu) return null;
-
-  const menu = MENUS?.[t.ref];
-
-  return (
-    <div key={i}>
-
-      <div className="border-b py-2">
-
-        <div className="flex items-start justify-between">
-
-          {/* IZQUIERDA */}
-          <div className="flex flex-col flex-1">
-
-            <div className="text-xl font-bold leading-none">
-              {t.cantidad} x {t.ref}
-            </div>
-
-            <div className="text-[10px] text-gray-500 leading-none">
-              {t.nombre}
-            </div>
-
-            {menu && (
-  <div className="text-[10px] font-bold pl-2 mt-1 leading-tight">
-    {menu.items.map(([r]) => {
-      const mod = t.mods?.[r] ?? "";
-
-      return (
+        {/* MENU LATERAL */}
         <div
-          key={r}
-          onClick={() => editarSubMenu(t.ref, r)}
-          className="cursor-pointer"
+          className={`fixed top-0 left-0 w-64 h-full bg-white z-50 transform ${
+            menuAbierto ? "translate-x-0" : "-translate-x-full"
+          } transition duration-300 ease-in-out overflow-y-auto pb-10 shadow-lg`}
         >
-          {r}{mod ? ` ${mod}` : ""}
-        </div>
-      );
-    })}
-  </div>
-)}
+          <div className="p-4 font-bold border-b">Categorías</div>
 
-            {(t.nota || t.aceite || t.gluten || t.verdura || t.carne || t.huevo || t.marisco || t.frutossecos) && (
-              <div className="text-[10px] font-bold leading-tight">
-                {[
-                  t.verdura && "NO VERDURA",
-                  t.carne && "NO CARNE",
-                  t.gluten && "SIN GLUTEN",
-                  t.aceite && "ACEITE",
-                  t.huevo && "NO HUEVO",
-                  t.marisco && "ALERGIA MARISCO",
-                  t.frutossecos && "ALERGIA FRUTOS SECOS",
-                  t.nota
-                ].filter(Boolean).join(" / ")}
-              </div>
-            )}
-
-          </div>
-
-          {/* DERECHA */}
-          <div className="flex items-center gap-2 font-mono font-bold">
-
-            <div className="flex gap-1 text-sm">
-              <button onClick={(e) => { e.stopPropagation(); restar(t.ref); }}>➖</button>
-              <button onClick={(e) => { e.stopPropagation(); sumar(t.ref); }}>➕</button>
-              <button onClick={(e) => { e.stopPropagation(); eliminarLinea(t.ref); }}>❌</button>
-              <button onClick={(e) => { e.stopPropagation(); editarNota(t); }}>📝</button>
-            </div>
-
-            <div className="text-right min-w-[60px]">
-              {(t.precio * t.cantidad).toFixed(2)}€
-            </div>
-
-          </div>
-
+          {categorias.map(c => (
+            <button
+              key={c}
+              onClick={() => {
+                setCategoriaActiva(c);
+                setMenuAbierto(false);
+              }}
+              className={`block w-full text-left p-3 ${
+                categoriaActiva === c
+                  ? "bg-black text-white"
+                  : "bg-gray-100"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
         </div>
 
-      </div>
+        {/* TIPO PEDIDO */}
+        <div className="flex gap-2 mb-3">
 
-    </div>
-  );
+          <button
+            onClick={() => setTipoPedido("comer")}
+            className={`w-1/3 p-2 rounded ${
+              tipoPedido === "comer"
+                ? "bg-black text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            🍽️ Comer
+          </button>
 
-})}
+          <button
+            onClick={() => setTipoPedido("llevar")}
+            className={`w-1/3 p-2 rounded ${
+              tipoPedido === "llevar"
+                ? "bg-black text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            🥡 Llevar
+          </button>
 
-{/* 👇 ESTE BLOQUE VA FUERA DEL MAP */}
-<div className="border-t mt-2 pt-2 flex justify-between font-bold">
-  <span>Total</span>
-  <span>{total.toFixed(2)}€</span>
-</div>
+          <button
+            onClick={() => setTipoPedido("recoger")}
+            className={`w-1/3 p-2 rounded ${
+              tipoPedido === "recoger"
+                ? "bg-black text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            🚶 Recoger
+          </button>
 
-    <button
-  onClick={() => {
+        </div>
 
-    if (!pedidoActivoId) return;
+        {/* DATOS */}
+        <div className="flex gap-2 mb-3">
+          <input
+            placeholder="Mesa"
+            value={pedidoNumero}
+            onChange={e => setPedidoNumero(e.target.value)}
+            className="w-1/2 p-3 border rounded"
+          />
 
-    if (!confirm("¿Cerrar ticket?")) return;
+          <input
+            placeholder="Comensales"
+            value={comensales}
+            onChange={e => setComensales(e.target.value)}
+            className="w-1/2 p-3 border rounded"
+          />
+        </div>
 
-    setPedidos(prev =>
-      prev.filter(p => p.id !== pedidoActivoId)
-    );
+        {/* BUSCADOR */}
+        <input
+          value={busqueda}
+          onChange={e => setBusqueda(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              agregarArticulo(busqueda);
+              setBusqueda("");
+            }
+          }}
+          placeholder="Referencia..."
+          className="w-full p-3 border rounded mb-4"
+        />
 
-    setPedidoActivoId(null);
+        {/* CATEGORÍA */}
+        {categoriaActiva && (
+          <div className="flex justify-between items-center mb-2">
 
-    setTicket([]);
+            <div className="font-bold">
+              {categoriaActiva}
+            </div>
 
-    setPedidoNumero("");
+            <button
+              onClick={() => setListaAbierta(!listaAbierta)}
+              className="text-sm bg-black text-white px-2 py-1 rounded"
+            >
+              {listaAbierta ? "⬆️ Ocultar" : "⬇️ Mostrar"}
+            </button>
 
-  }}
-  className="w-full bg-red-600 text-white p-3 rounded mb-2"
->
-  ✅ CERRAR TICKET
-</button>
+          </div>
+        )}
 
-   <div className="flex gap-2 mt-3">
+        {/* LISTA */}
+        {lista.length > 0 && listaAbierta && (
+          <div className="bg-white rounded shadow mb-4">
 
-  <button
-    onClick={() => setModoCocina(true)}
-    className="w-1/2 bg-orange-500 text-white p-2 rounded"
-  >
-    🍳 Cocina
-  </button>
+            {lista.map(([ref, a]) => (
+              <div
+                key={ref}
+                onClick={() => agregarArticulo(ref)}
+                className="p-3 border-b grid grid-cols-[70px_1fr_auto] items-center"
+              >
 
-  <button
-    onClick={() => {
-      setNumeroTicket(generarNumeroTicket());
-      setModoTicket(true);
-    }}
-    className="w-1/2 bg-black text-white p-2 rounded"
-  >
-    🧾 Ticket
-  </button>
+                <div className="font-bold">
+                  {ref}
+                </div>
 
-</div>
+                <div className="truncate">
+                  {a.nombre}
+                </div>
 
-  {porPersona && (
-    <div className="text-sm text-gray-600">
-      Por persona: {porPersona}€
-    </div>
-  )}
+                <div className="text-right font-mono tabular-nums w-full">
+                  {a.precio}€
+                </div>
 
-    {(tipoPedido === "llevar" || tipoPedido === "recoger") && (
-  <div className="space-y-2 mb-4">
-
-    <div className="flex gap-2">
-
-  {/* DIRECCIÓN */}
-  <input
-    placeholder="📍 Dirección"
-    value={direccion}
-    onChange={e=>setDireccion(e.target.value)}
-    className="w-2/3 p-3 border rounded"
-  />
-
-  {/* ZONA */}
-  <select
-    value={zona}
-    onChange={e=>setZona(e.target.value)}
-    className="w-1/3 p-3 border rounded"
-  >
-    <option value="">Zona</option>
-    <option>VNG</option>
-    <option>TACÓ</option>
-    <option>TENIS</option>
-    <option>COLLADA</option>
-    <option>FONDO SOMELLA</option>
-    <option>PRAT DE VILANOVA</option>
-    <option>URB. SANTA MARIA</option>
-    <option>ROQUETES</option>
-    <option>CUBELLES</option>
-    <option>CAMPING VILANOVA PARK</option>
-    <option>BAR HIGUERA</option>
-    <option>CINES ODEON</option>
-  </select>
-
-</div>
-
-    <input
-      placeholder="📞 Teléfono"
-      value={telefono}
-      onChange={e=>setTelefono(e.target.value)}
-      className="w-full p-3 border rounded"
-    />
-
-    <select
-      value={tiempo}
-      onChange={e=>setTiempo(e.target.value)}
-      className="w-full p-3 border rounded"
-    >
-      <option value="">⏱ Tiempo estimado</option>
-      <option>10 min</option>
-      <option>15 min</option>
-      <option>20 min</option>
-      <option>30 min</option>
-      <option>40 min</option>
-      <option>50 min</option>
-      <option>1h</option>
-      <option>1h 10min</option>
-      <option>1h 15min</option>
-      <option>1h 20min</option>
-      <option>1h 30min</option>
-    </select>
-
-    {/* 🔥 BOTONES DENTRO */}
-    <div className="flex gap-2">
-
-      <button
-        onClick={()=>setMetodoPago("EFECTIVO")}
-        className={`w-1/2 p-2 rounded ${
-          metodoPago === "EFECTIVO" ? "bg-green-600 text-white" : "bg-gray-200"
-        }`}
-      >
-        💵 Efectivo
-      </button>
-
-      <button
-        onClick={()=>setMetodoPago("VISA")}
-        className={`w-1/2 p-2 rounded ${
-          metodoPago === "VISA" ? "bg-blue-600 text-white" : "bg-gray-200"
-        }`}
-      >
-        💳 Visa
-      </button>
-
-    </div>
-
-  </div>
-)}
-      {/* 🔥 MODAL NOTAS */}
-      {productoEditando && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-xl w-80">
-
-            <div className="font-bold mb-2">MODIFICACIONES</div>
-
-            <input
-              placeholder="NOTA..."
-              value={notaTemp}
-              onChange={e => setNotaTemp(e.target.value)}
-              className="w-full border p-2 mb-3"
-            />
-
-            {[
-              ["aceite", "ACEITE"],
-              ["gluten", "SIN GLUTEN"],
-              ["verdura", "NO VERDURA"],
-              ["carne", "NO CARNE"],
-              ["huevo", "NO HUEVO"],
-              ["marisco", "ALERGIA MARISCO"],
-              ["frutossecos", "ALERGIA FRUTOS SECOS"]
-            ].map(([key, label]) => (
-              <div key={key} className="flex justify-between items-center mb-1">
-                <span>{label}</span>
-                <input
-                  type="checkbox"
-                  checked={checksTemp[key]}
-                  onChange={() =>
-                    setChecksTemp({
-                      ...checksTemp,
-                      [key]: !checksTemp[key]
-                    })
-                  }
-                />
               </div>
             ))}
 
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => {
-                  setTicket(ticket.map(t =>
-                    t === productoEditando
-                      ? {
-                          ...t,
-                          nota: notaTemp,
-                          ...checksTemp
-                        }
-                      : t
-                  ));
-                  setProductoEditando(null);
-                }}
-                className="w-1/2 bg-green-600 text-white p-2 rounded"
-              >
-                GUARDAR
-              </button>
-
-              <button
-                onClick={() => setProductoEditando(null)}
-                className="w-1/2 bg-gray-400 text-white p-2 rounded"
-              >
-                CANCELAR
-              </button>
-            </div>
-
           </div>
+        )}
+
+        {/* TICKET */}
+        {ticket.map((t, i) => {
+
+          if (t.esHijoMenu) return null;
+
+          const menu = MENUS?.[t.ref];
+
+          return (
+            <div key={i}>
+
+              <div className="border-b py-2">
+
+                <div className="flex items-start justify-between">
+
+                  {/* IZQUIERDA */}
+                  <div className="flex flex-col flex-1">
+
+                    <div className="text-xl font-bold leading-none">
+                      {t.cantidad} x {t.ref}
+                    </div>
+
+                    <div className="text-[10px] text-gray-500 leading-none">
+                      {t.nombre}
+                    </div>
+
+                    {menu && (
+                      <div className="text-[10px] font-bold pl-2 mt-1 leading-tight">
+
+                        {menu.items.map(([r]) => {
+                          const mod = t.mods?.[r] ?? "";
+
+                          return (
+                            <div
+                              key={r}
+                              onClick={() => editarSubMenu(t.ref, r)}
+                              className="cursor-pointer"
+                            >
+                              {r}{mod ? ` ${mod}` : ""}
+                            </div>
+                          );
+                        })}
+
+                      </div>
+                    )}
+
+                    {(t.nota ||
+                      t.aceite ||
+                      t.gluten ||
+                      t.verdura ||
+                      t.carne ||
+                      t.huevo ||
+                      t.marisco ||
+                      t.frutossecos) && (
+                      <div className="text-[10px] font-bold leading-tight">
+
+                        {[
+                          t.verdura && "NO VERDURA",
+                          t.carne && "NO CARNE",
+                          t.gluten && "SIN GLUTEN",
+                          t.aceite && "ACEITE",
+                          t.huevo && "NO HUEVO",
+                          t.marisco && "ALERGIA MARISCO",
+                          t.frutossecos && "ALERGIA FRUTOS SECOS",
+                          t.nota
+                        ]
+                          .filter(Boolean)
+                          .join(" / ")}
+
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* DERECHA */}
+                  <div className="flex items-center gap-2 font-mono font-bold">
+
+                    <div className="flex gap-1 text-sm">
+
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        restar(t.ref);
+                      }}>
+                        ➖
+                      </button>
+
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        sumar(t.ref);
+                      }}>
+                        ➕
+                      </button>
+
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        eliminarLinea(t.ref);
+                      }}>
+                        ❌
+                      </button>
+
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        editarNota(t);
+                      }}>
+                        📝
+                      </button>
+
+                    </div>
+
+                    <div className="text-right min-w-[60px]">
+                      {(t.precio * t.cantidad).toFixed(2)}€
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+          );
+        })}
+
+        {/* TOTAL */}
+        <div className="border-t mt-2 pt-2 flex justify-between font-bold">
+          <span>Total</span>
+          <span>{total.toFixed(2)}€</span>
         </div>
-      )}
 
-      {subMenuEditando && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-white p-4 rounded-xl w-80">
+      </>
+    )}
 
-      <div className="font-bold mb-2">
-        MODIFICAR {subMenuEditando.subRef}
-      </div>
+    {/* 🔵 PANTALLA PEDIDOS ABIERTOS */}
+    {modoAbiertos && (
+      <div className="bg-white p-2 rounded shadow mb-4">
 
-      <input
-        placeholder="NOTA..."
-        value={notaTemp}
-        onChange={e => setNotaTemp(e.target.value)}
-        className="w-full border p-2 mb-3"
-      />
+        <div className="flex justify-between mb-4">
 
-      {[
-        ["aceite", "ACEITE"],
-        ["gluten", "SIN GLUTEN"],
-        ["verdura", "NO VERDURA"],
-        ["carne", "NO CARNE"],
-        ["huevo", "NO HUEVO"],
-        ["marisco", "ALERGIA MARISCO"],
-        ["frutossecos", "ALERGIA FRUTOS SECOS"]
-      ].map(([key, label]) => (
-        <div key={key} className="flex justify-between items-center mb-1">
-          <span>{label}</span>
-          <input
-            type="checkbox"
-            checked={checksTemp[key]}
-            onChange={() =>
-              setChecksTemp({
-                ...checksTemp,
-                [key]: !checksTemp[key]
-              })
-            }
-          />
+          <h2 className="font-bold">
+            📋 Pedidos abiertos
+          </h2>
+
+          <button
+            onClick={() => {
+              setModoPedidos(true);
+              setModoAbiertos(false);
+            }}
+            className="bg-black text-white px-3 py-1 rounded"
+          >
+            Volver
+          </button>
+
         </div>
-      ))}
 
-      <div className="flex gap-2 mt-4">
-        <button
-          onClick={() => {
-            const texto = [
-              checksTemp.aceite && "ACEITE",
-              checksTemp.gluten && "SIN GLUTEN",
-              checksTemp.verdura && "NO VERDURA",
-              checksTemp.carne && "NO CARNE",
-              checksTemp.huevo && "NO HUEVO",
-              checksTemp.marisco && "ALERGIA MARISCO",
-              checksTemp.frutossecos && "ALERGIA FRUTOS SECOS",
-              notaTemp
-            ].filter(Boolean).join("\n");
+        {/* COMER */}
+        <div className="mb-3">
 
-            setTicket(ticket.map(t => {
-              if (t.ref === subMenuEditando.menuRef && t.esMenuPadre) {
-                return {
-                  ...t,
-                  mods: {
-                    ...t.mods,
-                    [subMenuEditando.subRef]: texto.toUpperCase()
-                  }
-                };
-              }
-              return t;
-            }));
+          <div className="font-bold">
+            🍽️ COMER
+          </div>
 
-            setSubMenuEditando(null);
-          }}
-          className="w-1/2 bg-green-600 text-white p-2 rounded"
-        >
-          GUARDAR
-        </button>
+          {pedidos
+            .filter(p => p.tipo === "comer")
+            .map(p => (
+              <div
+                key={p.id}
+                className="flex justify-between border-b p-2"
+              >
+                <span>{p.mesa}</span>
 
-        <button
-          onClick={() => setSubMenuEditando(null)}
-          className="w-1/2 bg-gray-400 text-white p-2 rounded"
-        >
-          CANCELAR
-        </button>
+                <span>
+                  {p.ticket
+                    .reduce((s, t) =>
+                      s + (t.precio * t.cantidad), 0)
+                    .toFixed(2)}€
+                </span>
+              </div>
+            ))}
+
+        </div>
+
+        {/* LLEVAR */}
+        <div className="mb-3">
+
+          <div className="font-bold">
+            🥡 LLEVAR
+          </div>
+
+          {pedidos
+            .filter(p => p.tipo === "llevar")
+            .map(p => (
+              <div
+                key={p.id}
+                className="flex justify-between border-b p-2"
+              >
+                <span>{p.mesa}</span>
+
+                <span>
+                  {p.ticket
+                    .reduce((s, t) =>
+                      s + (t.precio * t.cantidad), 0)
+                    .toFixed(2)}€
+                </span>
+              </div>
+            ))}
+
+        </div>
+
+        {/* RECOGER */}
+        <div>
+
+          <div className="font-bold">
+            🚶 RECOGER
+          </div>
+
+          {pedidos
+            .filter(p => p.tipo === "recoger")
+            .map(p => (
+              <div
+                key={p.id}
+                className="flex justify-between border-b p-2"
+              >
+                <span>{p.mesa}</span>
+
+                <span>
+                  {p.ticket
+                    .reduce((s, t) =>
+                      s + (t.precio * t.cantidad), 0)
+                    .toFixed(2)}€
+                </span>
+              </div>
+            ))}
+
+        </div>
+
       </div>
+    )}
 
-    </div>
   </div>
-)}
-
-        </div>
-    );
-
-} // 🔥 cierre POSApp
+);
 
 ReactDOM.createRoot(document.getElementById("root")).render(<POSApp />);
 

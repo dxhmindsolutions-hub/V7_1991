@@ -1448,17 +1448,14 @@ return (
   </div>
 )}
 
-    </div>
-  );
-}
+        </div>
+    );
+
+} // 🔥 cierre POSApp
 
 ReactDOM.createRoot(document.getElementById("root")).render(<POSApp />);
 
-  // =========================
-  // Registrar Service Worker
-  // =========================
-
- if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then(reg => console.log('Service Worker registrado', reg))
